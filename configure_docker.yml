@@ -1,0 +1,63 @@
+- hosts: all
+  tasks:
+          - name: Creating Yum Repository for Docker
+            yum_repository:
+                    name: docker_yum
+                    description: This repository has softwares for docker-ce
+                    baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
+                    gpgcheck: no
+
+          - name: Installing package
+            command: "yum install docker-ce --nobest -y"
+
+
+          - name: Starting and Enabling Docker service
+            service:
+                  name: "docker"
+                  state: started
+                  enabled: yes
+
+          - name: Install docker module of python
+            pip:
+                    name: docker
+
+          - name: Pull Image from Docker hub for httpd (centos)
+            docker_image:
+                    name: arjunsingh1212/centos-httpd
+                    tag: latest
+                    source: pull
+                    
+          - name: Run the container and expose to public
+            community.general.docker_container:
+                    name: AnsibleDockerContainer
+                    image: arjunsingh1212/centos-httpd
+                    state: started
+                    detach: yes
+                    command: /usr/sbin/httpd -DFOREGROUND
+                    exposed_ports:
+                            - "80"
+                    ports:
+                            - "1234:80"                   
+                      
+          - name: Copy the web page to Managed Node
+            copy:
+                    src: /index.html
+                    dest: /
+
+          - name: Copy the web page to Docker Container's Document Root
+            command: docker cp /index.html AnsibleDockerContainer:/var/www/html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
